@@ -356,10 +356,10 @@ type SoundCloudHistoryResponse struct {
 	Collection []SoundCloudHistoryItem `json:"collection"`
 }
 
-func resolveSoundCloudDownloadURL(track SoundCloudAPITrack, oauthToken string) string {
+func resolveSoundCloudDownloadURL(track SoundCloudAPITrack, scToken string) string {
 	clientID := "1HxML01xkzWgtHfBreaeZfpANMe3ADjb"
 	setHeaders := func(req *http.Request) {
-		req.Header.Set("Authorization", "OAuth "+oauthToken)
+		req.Header.Set("Authorization", "OAuth "+scToken)
 		req.Header.Set("User-Agent", "Mozilla/5.0")
 		req.Header.Set("Origin", "https://soundcloud.com")
 		req.Header.Set("Referer", "https://soundcloud.com/")
@@ -418,14 +418,14 @@ func resolveSoundCloudDownloadURL(track SoundCloudAPITrack, oauthToken string) s
 	return ""
 }
 
-func getSoundCloudTrackInfo(track SoundCloudAPITrack) SoundCloudTrackInfo {
+func getSoundCloudTrackInfo(track SoundCloudAPITrack, scToken string) SoundCloudTrackInfo {
 	author := track.User.Username
 	if track.PublisherMetadata.Artist != "" {
 		author = track.PublisherMetadata.Artist
 	}
 	minutes := track.Duration / 60000
 	seconds := (track.Duration % 60000) / 1000
-	downloadURL := resolveSoundCloudDownloadURL(track, "") // Pass an empty string for oauthToken as it's not hardcoded here
+	downloadURL := resolveSoundCloudDownloadURL(track, scToken)
 	return SoundCloudTrackInfo{
 		ID:           track.ID,
 		PermalinkUrl: track.PermalinkUrl,
@@ -439,13 +439,13 @@ func getSoundCloudTrackInfo(track SoundCloudAPITrack) SoundCloudTrackInfo {
 	}
 }
 
-func getSoundCloudHistory(oauthToken string) (*SoundCloudHistoryItem, error) {
+func getSoundCloudHistory(scToken string) (*SoundCloudHistoryItem, error) {
 	apiURL := "https://api-v2.soundcloud.com/me/play-history/tracks?limit=1&offset=0&client_id=1HxML01xkzWgtHfBreaeZfpANMe3ADjb"
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "OAuth "+oauthToken)
+	req.Header.Set("Authorization", "OAuth "+scToken)
 	req.Header.Set("User-Agent", "Mozilla/5.0")
 	resp, err := client.Do(req)
 	if err != nil {
@@ -467,13 +467,13 @@ func getSoundCloudHistory(oauthToken string) (*SoundCloudHistoryItem, error) {
 }
 
 func GetCurrentTrackSoundcloud(c *gin.Context) {
-	oauthToken := c.GetHeader("oauth_token")
-	if oauthToken == "" {
-		c.IndentedJSON(http.StatusUnauthorized, gin.H{"error": "Необходим заголовок oauth_token"})
+	scToken := c.GetHeader("sc-token")
+	if scToken == "" {
+		c.IndentedJSON(http.StatusUnauthorized, gin.H{"error": "Необходим заголовок sc-token"})
 		return
 	}
 
-	historyItem, err := getSoundCloudHistory(oauthToken)
+	historyItem, err := getSoundCloudHistory(scToken)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -482,6 +482,6 @@ func GetCurrentTrackSoundcloud(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "История пуста"})
 		return
 	}
-	trackInfo := getSoundCloudTrackInfo(historyItem.Track)
+	trackInfo := getSoundCloudTrackInfo(historyItem.Track, scToken)
 	c.IndentedJSON(http.StatusOK, gin.H{"track": trackInfo})
 }

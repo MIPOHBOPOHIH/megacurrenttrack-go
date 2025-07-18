@@ -22,7 +22,7 @@ ya-token: token // https://github.com/MarshalX/yandex-music-api/discussions/513
 
 Для доступа к эндпоинту /get_current_track_soundcloud требуется заголовок:
 ```
-oauth_token: token // https://now.es3n1n.eu/sc/
+sc-token: token // https://now.es3n1n.eu/sc/
 ```
 
 ## 📤 Ответы /get_current_track_beta
@@ -92,10 +92,10 @@ oauth_token: token // https://now.es3n1n.eu/sc/
 }
 ```
 
-Если не передан oauth_token:
+Если не передан sc-token:
 ```json
 {
-  "error": "Необходим заголовок oauth_token"
+  "error": "Необходим заголовок sc-token"
 }
 ```
 

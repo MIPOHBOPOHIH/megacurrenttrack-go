@@ -46,7 +46,6 @@ type SoundCloudTrackInfo struct {
 	Title        string `json:"title"`
 	Author       string `json:"author"`
 	ArtworkURL   string `json:"artwork_url"`
-	DownloadURL  string `json:"download_url"`
 	Duration     int    `json:"duration"`
 	Minutes      int    `json:"minutes"`
 	Seconds      int    `json:"seconds"`
@@ -334,7 +333,6 @@ type SoundCloudAPITrack struct {
 	} `json:"publisher_metadata"`
 	ArtworkURL   string `json:"artwork_url"`
 	Downloadable bool   `json:"downloadable"`
-	DownloadURL  string `json:"download_url"`
 	Duration     int    `json:"duration"`
 	Media        struct {
 		Transcodings []struct {
@@ -356,83 +354,19 @@ type SoundCloudHistoryResponse struct {
 	Collection []SoundCloudHistoryItem `json:"collection"`
 }
 
-func resolveSoundCloudDownloadURL(track SoundCloudAPITrack, scToken string) string {
-	clientID := "1HxML01xkzWgtHfBreaeZfpANMe3ADjb"
-	setHeaders := func(req *http.Request) {
-		req.Header.Set("Authorization", "OAuth "+scToken)
-		req.Header.Set("User-Agent", "Mozilla/5.0")
-		req.Header.Set("Origin", "https://soundcloud.com")
-		req.Header.Set("Referer", "https://soundcloud.com/")
-	}
-	if track.Downloadable && track.DownloadURL != "" {
-		req, err := http.NewRequest("GET", track.DownloadURL, nil)
-		if err == nil {
-			q := req.URL.Query()
-			q.Add("client_id", clientID)
-			req.URL.RawQuery = q.Encode()
-			setHeaders(req)
-			resp, err := client.Do(req)
-			if err == nil && resp.StatusCode == 200 {
-				defer resp.Body.Close()
-				var data map[string]interface{}
-				if err := json.NewDecoder(resp.Body).Decode(&data); err == nil {
-					if url, ok := data["url"].(string); ok {
-						return url
-					}
-				}
-			} else {
-				if resp != nil {
-					body, _ := io.ReadAll(resp.Body)
-					fmt.Printf("[SoundCloud] download_url resp: %d, body: %s\n", resp.StatusCode, string(body))
-				}
-			}
-		}
-	}
-	for _, transcoding := range track.Media.Transcodings {
-		fmtT := transcoding.Format
-		if fmtT.Protocol == "progressive" && strings.HasPrefix(fmtT.MimeType, "audio/") {
-			req, err := http.NewRequest("GET", transcoding.URL, nil)
-			if err == nil {
-				q := req.URL.Query()
-				q.Add("client_id", clientID)
-				req.URL.RawQuery = q.Encode()
-				setHeaders(req)
-				resp, err := client.Do(req)
-				if err == nil && resp.StatusCode == 200 {
-					defer resp.Body.Close()
-					var data map[string]interface{}
-					if err := json.NewDecoder(resp.Body).Decode(&data); err == nil {
-						if url, ok := data["url"].(string); ok {
-							return url
-						}
-					}
-				} else {
-					if resp != nil {
-						body, _ := io.ReadAll(resp.Body)
-						fmt.Printf("[SoundCloud] transcoding resp: %d, body: %s\n", resp.StatusCode, string(body))
-					}
-				}
-			}
-		}
-	}
-	return ""
-}
-
-func getSoundCloudTrackInfo(track SoundCloudAPITrack, scToken string) SoundCloudTrackInfo {
+func getSoundCloudTrackInfo(track SoundCloudAPITrack) SoundCloudTrackInfo {
 	author := track.User.Username
 	if track.PublisherMetadata.Artist != "" {
 		author = track.PublisherMetadata.Artist
 	}
 	minutes := track.Duration / 60000
 	seconds := (track.Duration % 60000) / 1000
-	downloadURL := resolveSoundCloudDownloadURL(track, scToken)
 	return SoundCloudTrackInfo{
 		ID:           track.ID,
 		PermalinkUrl: track.PermalinkUrl,
 		Title:        track.Title,
 		Author:       author,
 		ArtworkURL:   track.ArtworkURL,
-		DownloadURL:  downloadURL,
 		Duration:     track.Duration,
 		Minutes:      minutes,
 		Seconds:      seconds,
@@ -482,6 +416,6 @@ func GetCurrentTrackSoundcloud(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "История пуста"})
 		return
 	}
-	trackInfo := getSoundCloudTrackInfo(historyItem.Track, scToken)
+	trackInfo := getSoundCloudTrackInfo(historyItem.Track)
 	c.IndentedJSON(http.StatusOK, gin.H{"track": trackInfo})
 }

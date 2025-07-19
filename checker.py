@@ -5,8 +5,8 @@ sc__info = requests.get("http://localhost:8080/get_current_track_soundcloud", he
 })
 print(sc__info.text)
 
-ya_token = " " # https://github.com/MarshalX/yandex-music-api/discussions/513
-ya__info = requests.get("http://localhost:8080/get_current_track_beta", headers = {
-     "ya-token": ya_token,
-})
-print(ya__info.text)   
+#ya_token = " " # https://github.com/MarshalX/yandex-music-api/discussions/513
+#ya__info = requests.get("http://localhost:8080/get_current_track_beta", headers = {
+#     "ya-token": ya_token,
+#})
+#print(ya__info.text)   

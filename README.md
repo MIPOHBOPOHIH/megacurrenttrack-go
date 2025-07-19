@@ -84,7 +84,6 @@ sc-token: token // https://now.es3n1n.eu/sc/
         "title": "Серега Пират - Песня В Поддержку Афроамериканцев",
         "author": "QQqkeY 262",
         "artwork_url": "https://i1.sndcdn.com/artworks-OYsZy7KYBNfFpPse-FINtww-large.jpg",
-        "download_url": "тут была ссылка на скачивание но я ее убрал думаю понимаете почему",
         "duration": 104257,
         "minutes": 1,
         "seconds": 44

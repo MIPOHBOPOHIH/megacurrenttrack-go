@@ -113,6 +113,13 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
+
+	r.Static("/static", "./static")
+
+	r.GET("/", func(c *gin.Context) {
+		c.File("./static/index.html")
+	})
+
 	r.GET("/get_current_track_beta", GetCurrentTrackYandex)
 	r.GET("/get_current_track_soundcloud", GetCurrentTrackSoundcloud)
 

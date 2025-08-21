@@ -19,3 +19,6 @@
 
 # Go workspace file
 go.work
+
+# megacurrenttrack-go's build result file
+main
